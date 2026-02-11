@@ -1,5 +1,6 @@
 package com.payauth.payauth.user.domain;
 
+import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
 import lombok.*;
 
