@@ -21,6 +21,9 @@ public class User {
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
+    public User(Long id, String name, String phoneNumber, String birthDate, UserStatus status) {
+    }
+
     // 정적 팩토리 메서드
     public static User createNewUser(String name, String phoneNumber, String birthDate) {
         validateName(name);
@@ -34,6 +37,12 @@ public class User {
         user.userStatus = UserStatus.ACTIVE;
         user.createdAt = LocalDateTime.now();
         return user;
+    }
+
+    // DB 복원용 전용 메서드 (Mapper에서 사용)
+    public static User withId(Long id, String name, String phoneNumber, String birthDate, UserStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
+                              LocalDateTime deletedAt) {
+        return new User(id, name, phoneNumber, birthDate, status,  createdAt, updatedAt, deletedAt);
     }
 
     // === 비즈니스 로직 ===

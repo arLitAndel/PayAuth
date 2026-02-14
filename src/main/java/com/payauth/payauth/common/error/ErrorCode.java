@@ -14,8 +14,6 @@ public enum ErrorCode {
 
     // User Errors
     USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다"),
-    DUPLICATE_EMAIL(409, "U002", "이미 사용중인 이메일입니다"),
-    DUPLICATE_LOGIN_ID(409, "U003", "이미 사용중인 아이디입니다"),
     INVALID_USER_STATUS(400, "U004", "유효하지 않은 사용자 상태입니다"),
     USER_ALREADY_REGISTERED(409, "U005", "이미 가입된 사용자입니다"),
     USER_SUSPENDED(403, "U006", "정지된 사용자입니다"),
@@ -27,6 +25,7 @@ public enum ErrorCode {
     INVALID_BIRTH_DATE(400, "U012", "유효하지 않은 생년월일입니다"),
     INVALID_BIRTH_DATE_FORMAT(400, "U013", "생년월일 형식이 올바르지 않습니다"),
     USER_ALREADY_DELETED(400, "U014", "이미 탈퇴한 사용자입니다"),
+    DUPLICATED_PHONE_NUMBER(400, "U015", "이미 사용중인 번호 입니다."),
 
     // Auth Errors
     AUTH_CREDENTIAL_NOT_FOUND(404, "A001", "인증 정보를 찾을 수 없습니다"),
