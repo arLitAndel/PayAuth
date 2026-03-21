@@ -1,13 +1,14 @@
 package com.payauth.payauth.auth.domain;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import com.payauth.payauth.auth.application.port.out.PinEncryptor;
+import jdk.jshell.Snippet;
+import lombok.*;
 
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthCredential {
@@ -22,6 +23,21 @@ public class AuthCredential {
     private LocalDateTime blockedUntil;
     private LocalDateTime createdAt;
     private LocalDateTime verifiedAt;
+
+    // 회원가입 시 최초 생성
+    public static AuthCredential createNewCredential(Long userId, String rawPin, PinEncryptor encryptor) {
+        AuthCredential credential = new AuthCredential();
+        credential.userId = userId;
+        credential.pinCode = encryptor.encrypt(rawPin);
+        credential.verified = false;
+        credential.attemptCount = 0;
+        credential.consecutiveFailCount = 0;
+        credential.blockedUntil = null;
+        credential.createdAt = LocalDateTime.now();
+        credential.expiresAt = null;  // 만료 정책 있으면 여기서 설정
+        credential.verifiedAt = null;
+        return credential;
+    }
 
     // 인증 성공 시
     public void markAsVerified() {

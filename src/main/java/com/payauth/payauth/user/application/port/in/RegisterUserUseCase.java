@@ -10,6 +10,7 @@ public interface RegisterUserUseCase {
     record RegisterUserCommand(
             String phoneNumber,
             String name,
-            String birthDate
+            String birthDate,
+            String pinCode
     ) {}
 }

@@ -14,7 +14,8 @@ public class UserWebMapper {
         return new RegisterUserUseCase.RegisterUserCommand(
                 request.phoneNumber(),
                 request.name(),
-                request.birthDate()
+                request.birthDate(),
+                request.pinCode()
         );
     }
 

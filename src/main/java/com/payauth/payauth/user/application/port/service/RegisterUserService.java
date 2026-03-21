@@ -1,5 +1,6 @@
 package com.payauth.payauth.user.application.port.service;
 
+import com.payauth.payauth.auth.application.port.in.RegisterPinUseCase;
 import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
 import com.payauth.payauth.user.application.port.in.RegisterUserUseCase;
@@ -19,6 +20,7 @@ public class RegisterUserService implements RegisterUserUseCase {
 
     private final CheckUserDuplicationPort checkUserDuplicationPort;
     private final SaveUserPort saveUserPort;
+    private final RegisterPinUseCase registerPinUseCase;
 
     @Override
     @Transactional
@@ -45,6 +47,10 @@ public class RegisterUserService implements RegisterUserUseCase {
             User savedUser = saveUserPort.saveUser(newUser);
             log.info("[REGISTER_SUCCESS] Successfully registered user. Name: {}, Phone: {}",
                     savedUser.getName(), savedUser.getPhoneNumber());
+
+            // 4. Auth 도메인 로직: 생성된 userId와 함께 핀번호 저장 명령 전달
+            // pinCode는 여기서만 쓰이고 사라짐
+            registerPinUseCase.registerPin(savedUser.getId(), command.pinCode());
 
             return savedUser;
 
