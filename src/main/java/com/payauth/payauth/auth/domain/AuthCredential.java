@@ -34,7 +34,7 @@ public class AuthCredential {
         credential.consecutiveFailCount = 0;
         credential.blockedUntil = null;
         credential.createdAt = LocalDateTime.now();
-        credential.expiresAt = null;  // 만료 정책 있으면 여기서 설정
+        credential.expiresAt = credential.createdAt.plusYears(1); //1년후 만료.
         credential.verifiedAt = null;
         return credential;
     }

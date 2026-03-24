@@ -25,7 +25,7 @@ public enum ErrorCode {
     INVALID_BIRTH_DATE(400, "U012", "유효하지 않은 생년월일입니다"),
     INVALID_BIRTH_DATE_FORMAT(400, "U013", "생년월일 형식이 올바르지 않습니다"),
     USER_ALREADY_DELETED(400, "U014", "이미 탈퇴한 사용자입니다"),
-    DUPLICATED_PHONE_NUMBER(400, "U015", "이미 사용중인 번호 입니다."),
+    DUPLICATED_PHONE_NUMBER(400, "U015", "이미 사용중인 휴대폰 번호 입니다."),
 
     // Auth Errors
     AUTH_CREDENTIAL_NOT_FOUND(404, "A001", "인증 정보를 찾을 수 없습니다"),

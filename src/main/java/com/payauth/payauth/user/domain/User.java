@@ -14,18 +14,16 @@ public class User {
 
     private Long id;
     private String name;
-    private String phoneNumber;
-    private String birthDate; // YYYYMMDD
+    private String phoneNumber;      //복호화용
+    private String phoneNumberHash;  //중복체크용
+    private String birthDate;        // YYYYMMDD
     private UserStatus userStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
-    public User(Long id, String name, String phoneNumber, String birthDate, UserStatus status) {
-    }
-
     // 정적 팩토리 메서드
-    public static User createNewUser(String name, String phoneNumber, String birthDate) {
+    public static User createNewUser(String name, String phoneNumber, String phoneNumberHash, String birthDate) {
         validateName(name);
         validatePhoneNumber(phoneNumber);
         validateBirthDate(birthDate);
@@ -33,16 +31,17 @@ public class User {
         User user = new User();
         user.name = name;
         user.phoneNumber = phoneNumber;
+        user.phoneNumberHash = phoneNumberHash;
         user.birthDate = birthDate;
         user.userStatus = UserStatus.ACTIVE;
         user.createdAt = LocalDateTime.now();
         return user;
     }
 
-    // DB 복원용 전용 메서드 (Mapper에서 사용)
-    public static User withId(Long id, String name, String phoneNumber, String birthDate, UserStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
+    // DB 복원용 전용 메서드 (Mapper에서 사용) (찾을 때 사용이었던 걸로 기억함...)
+    public static User withId(Long id, String name, String phoneNumber, String phoneNumberHash, String birthDate, UserStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
                               LocalDateTime deletedAt) {
-        return new User(id, name, phoneNumber, birthDate, status,  createdAt, updatedAt, deletedAt);
+        return new User(id, name, phoneNumber, phoneNumberHash, birthDate, status,  createdAt, updatedAt, deletedAt);
     }
 
     // === 비즈니스 로직 ===
@@ -55,6 +54,7 @@ public class User {
     public void updatePhoneNumber(String phoneNumber) {
         validatePhoneNumber(phoneNumber);
         this.phoneNumber = phoneNumber;
+        this.phoneNumberHash = phoneNumber;
         this.updatedAt = LocalDateTime.now();
     }
 
