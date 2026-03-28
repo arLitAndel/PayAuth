@@ -59,6 +59,9 @@ public class User {
     }
 
     public void activate() {
+        if (this.userStatus != UserStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_USER_STATUS);
+        }
         this.userStatus = UserStatus.ACTIVE;
         this.updatedAt = LocalDateTime.now();
     }

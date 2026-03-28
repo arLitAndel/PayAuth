@@ -1,8 +1,10 @@
 package com.payauth.payauth.user.adapter.in.web;
 
-import com.payauth.payauth.user.adapter.in.web.dto.UserResponse;
-import com.payauth.payauth.user.adapter.in.web.dto.UserSignUpRequest;
-import com.payauth.payauth.user.application.port.in.RegisterUserUseCase;
+import com.payauth.payauth.user.adapter.in.web.dto.*;
+import com.payauth.payauth.user.application.port.in.SignUpCompleteUseCase;
+import com.payauth.payauth.user.application.port.in.SignUpRequestUseCase.SignUpRequestCommand;
+import com.payauth.payauth.user.application.port.in.SignUpVerifyUseCase.SignUpVerifyCommand;
+import com.payauth.payauth.user.application.port.in.SignUpCompleteUseCase.signUpCompleteCommand;
 import com.payauth.payauth.user.domain.User;
 import org.springframework.stereotype.Component;
 
@@ -10,12 +12,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserWebMapper {
 
-    public RegisterUserUseCase.RegisterUserCommand toCommand(UserSignUpRequest request) {
-        return new RegisterUserUseCase.RegisterUserCommand(
+    public SignUpRequestCommand toRequestCommand(SignUpRequest request) {
+        return new SignUpRequestCommand(
                 request.phoneNumber(),
                 request.name(),
-                request.birthDate(),
-                request.pinCode()
+                request.birthDate()
         );
     }
 
@@ -27,4 +28,19 @@ public class UserWebMapper {
                 user.getUserStatus().name()
         );
     }
+
+    public SignUpVerifyCommand toVerifyCommand(SignUpVerifyRequest request) {
+        return new SignUpVerifyCommand(
+                request.phoneNumber(),
+                request.verificationCode()
+        );
+    }
+
+    public signUpCompleteCommand toPinCommand(SignUpCompleteRequest request) {
+        return new signUpCompleteCommand(
+                request.signUpToken(),
+                request.pinCode()
+        );
+    }
+
 }

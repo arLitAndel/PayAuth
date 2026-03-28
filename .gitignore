@@ -54,3 +54,6 @@ application.properties
 # 패키지 파일
 *.jar
 *.war
+
+#설정
+application-local.properties
