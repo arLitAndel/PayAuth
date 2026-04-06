@@ -29,13 +29,13 @@ public class AuthCredential {
         AuthCredential credential = new AuthCredential();
         credential.userId = userId;
         credential.pinCode = encryptor.encrypt(rawPin);
-        credential.verified = false;
+        credential.verified = true;
         credential.attemptCount = 0;
         credential.consecutiveFailCount = 0;
         credential.blockedUntil = null;
         credential.createdAt = LocalDateTime.now();
         credential.expiresAt = credential.createdAt.plusYears(1); //1년후 만료.
-        credential.verifiedAt = null;
+        credential.verifiedAt = LocalDateTime.now();
         return credential;
     }
 
