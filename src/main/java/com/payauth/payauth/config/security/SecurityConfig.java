@@ -18,7 +18,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable) // REST API이므로 CSRF 비활성화
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/users/signup").permitAll() // 회원가입은 인증 없이 허용
+                    .requestMatchers("/users/signup/**").permitAll() // 회원가입은 인증 없이 허용
                     .requestMatchers("/users/login").permitAll()  // 로그인도 허용
                     .requestMatchers("/h2-console/**").permitAll()    // H2 콘솔 (개발용)
                     .anyRequest().authenticated()                      // 나머지는 인증 필요

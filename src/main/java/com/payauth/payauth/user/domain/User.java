@@ -33,7 +33,7 @@ public class User {
         user.phoneNumber = phoneNumber;
         user.phoneNumberHash = phoneNumberHash;
         user.birthDate = birthDate;
-        user.userStatus = UserStatus.ACTIVE;
+        user.userStatus = UserStatus.PENDING;
         user.createdAt = LocalDateTime.now();
         return user;
     }

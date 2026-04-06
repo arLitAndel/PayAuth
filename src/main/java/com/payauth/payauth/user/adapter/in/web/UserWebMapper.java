@@ -31,7 +31,7 @@ public class UserWebMapper {
 
     public SignUpVerifyCommand toVerifyCommand(SignUpVerifyRequest request) {
         return new SignUpVerifyCommand(
-                request.phoneNumber(),
+                request.verificationId(),
                 request.verificationCode()
         );
     }

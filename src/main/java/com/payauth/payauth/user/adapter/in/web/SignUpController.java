@@ -26,15 +26,14 @@ public class SignUpController {
 
     // 1단계: 정보 입력 + SMS 발송
     @PostMapping("/request")
-    public ResponseEntity<Void> requestSignUp(@Valid @RequestBody SignUpRequest request) {
+    public ResponseEntity<SignUpResponse> requestSignUp(@Valid @RequestBody SignUpRequest request) {
 
         var command = userWebMapper.toRequestCommand(request);
-        signUpRequestUseCase.request(command);
+        SignUpResponse signUpResponse = signUpRequestUseCase.request(command);
 
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.accepted().body(signUpResponse);
     }
-
-    // 2단계: SMS 인증 확인 → user 저장
+    // 2단계: SMS 인증 확인 → user저장
     @PostMapping("/verify")
     public ResponseEntity<SignUpVerifyResponse> verifySignUp(@Valid @RequestBody SignUpVerifyRequest request) {
 

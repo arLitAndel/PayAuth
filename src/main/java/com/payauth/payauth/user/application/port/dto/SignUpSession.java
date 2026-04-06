@@ -5,5 +5,6 @@ import java.time.LocalDate;
 public record SignUpSession (
         String name,
         String birthDate,
+        String phoneNumber,
         String verificationCode
 ){ }

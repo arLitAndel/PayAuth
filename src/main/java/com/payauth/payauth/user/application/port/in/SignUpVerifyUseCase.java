@@ -7,7 +7,7 @@ public interface SignUpVerifyUseCase {
 
     // 입력값을 캡슐화한 내부 클래스 (Command)
     record SignUpVerifyCommand(
-            String phoneNumber,
+            String verificationId,
             String verificationCode
     ) {}
     // 반환값을 캡슐화한 내부 클래스 (Result)

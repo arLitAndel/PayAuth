@@ -6,11 +6,15 @@ import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
 import com.payauth.payauth.common.sms.SmsPort;
 import com.payauth.payauth.common.util.MaskUtil;
+import com.payauth.payauth.user.adapter.in.web.dto.SignUpResponse;
 import com.payauth.payauth.user.application.port.dto.SignUpSession;
 import com.payauth.payauth.user.application.port.in.SignUpRequestUseCase;
 import com.payauth.payauth.user.application.port.out.CheckUserDuplicationPort;
+import com.payauth.payauth.user.application.port.out.LoadUserPort;
 import com.payauth.payauth.user.application.port.out.SaveUserPort;
 import com.payauth.payauth.user.application.port.out.SignUpSessionPort;
+import com.payauth.payauth.user.domain.User;
+import com.payauth.payauth.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -25,8 +32,9 @@ import java.security.SecureRandom;
 public class SignUpRequestService implements SignUpRequestUseCase {
 
     private final CheckUserDuplicationPort checkUserDuplicationPort;
-    private final SmsPort smsPort;                      // SMS 발송 포트 (신규)
-    private final SignUpSessionPort signUpSessionPort; // Redis 포트 (신규)
+    private final SmsPort smsPort;                      // SMS 발송 포트
+    private final SignUpSessionPort signUpSessionPort; // Redis 포트
+    private final LoadUserPort loadUserPort;
     private final CryptoUtil cryptoUtil;
 
     // SecureRandom 인스턴스 재사용
@@ -34,16 +42,19 @@ public class SignUpRequestService implements SignUpRequestUseCase {
     private static final int MAX_RESEND_COUNT = 5;
 
     @Override
-    @Transactional
-    public void request(SignUpRequestCommand command) {
+    public SignUpResponse request(SignUpRequestCommand command) {
 
         String phoneNumber = command.phoneNumber();
 
         // 1. 중복 체크 (가장 먼저 수행하여 불필요한 리소스 방지)
         String phoneHash = cryptoUtil.hash(phoneNumber);
-        if (checkUserDuplicationPort.existsByPhoneNumberHash(phoneHash)) {
-            throw new BusinessException(ErrorCode.DUPLICATED_PHONE_NUMBER);
-        }
+        loadUserPort.findByPhoneNumberHash(phoneHash).ifPresent(user -> {
+            if (user.getUserStatus() == UserStatus.ACTIVE) {
+                throw new BusinessException(ErrorCode.DUPLICATED_PHONE_NUMBER);
+            }
+            log.info("[REGISTER_RETRY] Pending user found, resending verification. Phone: {}",
+                    MaskUtil.maskPhone(phoneNumber));
+        });
 
         // 2. 재발송 횟수 체크 및 증가 (Atomic 연산 권장)
         int resendCount = signUpSessionPort.incrementResendCount(phoneNumber);
@@ -52,40 +63,31 @@ public class SignUpRequestService implements SignUpRequestUseCase {
             throw new BusinessException(ErrorCode.TOO_MANY_RESEND_ATTEMPTS);
         }
 
-        // 3. 인증 코드 생성
+        // 3. 인증 코드 + verificationId 생성
         String verificationCode = generateVerificationCode();
+        String verificationId = UUID.randomUUID().toString();
 
-        // 4. SMS 발송 (발송 실패 시 예외 발생 -> 트랜잭션 롤백)
+        // 4. SMS 발송
         try {
             smsPort.send(phoneNumber, verificationCode);
         } catch (Exception e) {
             log.error("[SMS_ERROR] Failed to send verification code to {}", MaskUtil.maskPhone(phoneNumber), e);
-            // 문자 발송 실패 전용 에러 코드를 던짐
+            // 문자 발송 예외를 던져 이후 세션 저장(5번)을 막음
+            signUpSessionPort.decrementResendCount(phoneNumber);
             throw new BusinessException(ErrorCode.SMS_SEND_FAILED);
         }
 
         // 5. Redis에 세션 정보 저장 (발송 성공 시에만 저장됨)
-        signUpSessionPort.saveVerificationSession(
-                phoneNumber,
-                new SignUpSession(command.name(), command.birthDate(), verificationCode)
+        LocalDateTime expiredAt = signUpSessionPort.saveVerificationSession(
+                verificationId,
+                new SignUpSession(command.name(), command.birthDate(), phoneNumber, verificationCode)
         );
+
 
         log.info("[REGISTER_TRY] Verification code sent. Name: {}, Phone: {}",
                 MaskUtil.maskName(command.name()), MaskUtil.maskPhone(phoneNumber));
 
-    }
-
-    /**
-     * SMS 발송 로직 (비동기 처리 또는 별도 예외 처리)
-     */
-    private void sendSmsAsync(String phoneNumber, String code) {
-        try {
-            smsPort.send(phoneNumber, code);
-        } catch (Exception e) {
-            // SMS 발송 실패 시 로그를 남기되, 이미 저장된 세션은 유지 (사용자가 '재발송' 클릭 가능)
-            log.error("[SMS_ERROR] Failed to send verification code to {}", MaskUtil.maskPhone(phoneNumber), e);
-            // 필요 시 "문자 발송에 실패했습니다"라는 별도 예외를 던질 수 있음
-        }
+        return new SignUpResponse(verificationId, MaskUtil.maskPhone(phoneNumber), expiredAt);
     }
 
     private String generateVerificationCode() {

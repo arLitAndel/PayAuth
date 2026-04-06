@@ -24,7 +24,7 @@ public class SmsAdapter implements SmsPort {
             Message message = new Message();
             message.setFrom(properties.getSender());
             message.setTo(phoneNumber);
-            message.setText("[서비스명] 인증번호 [" + code + "]를 입력해주세요.");
+            message.setText("[payAuth] 인증번호 [" + code + "]를 입력해주세요.");
 
             messageService.sendOne(new SingleMessageSendingRequest(message));
             log.info("[SMS_SENT] Phone: {}", MaskUtil.maskPhone(phoneNumber));
