@@ -1,10 +1,8 @@
-package com.payauth.payauth.user.application.port.service;
+package com.payauth.payauth.user.application.service;
 
 import com.payauth.payauth.auth.application.port.in.RegisterPinUseCase;
 import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
-import com.payauth.payauth.user.application.port.dto.SignUpSession;
-import com.payauth.payauth.user.application.port.in.RegisterUserUseCase;
 import com.payauth.payauth.user.application.port.in.SignUpCompleteUseCase;
 import com.payauth.payauth.user.application.port.out.LoadUserPort;
 import com.payauth.payauth.user.application.port.out.SignUpSessionPort;

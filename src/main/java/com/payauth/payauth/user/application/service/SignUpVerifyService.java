@@ -1,4 +1,4 @@
-package com.payauth.payauth.user.application.port.service;
+package com.payauth.payauth.user.application.service;
 
 import com.payauth.payauth.common.crypto.CryptoUtil;
 import com.payauth.payauth.common.error.BusinessException;

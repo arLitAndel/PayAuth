@@ -39,6 +39,7 @@ public enum ErrorCode {
     CURRENT_PIN_MISMATCH(401, "A008", "현재 핀번호가 일치하지 않습니다"),
     NEW_PIN_SAME_AS_CURRENT(400, "A009", "새 핀번호는 현재 핀번호와 달라야 합니다"),
     PIN_CHANGE_NOT_ALLOWED(403, "A010", "핀번호 변경이 허용되지 않습니다"),
+    INVALID_AUTH_INFO(400, "A011", "입력하신 정보가 일치하지 않습니다."),
 
     // Encryption Errors
     ENCRYPTION_FAILED(500, "E001", "암호화 처리 중 오류가 발생했습니다"),

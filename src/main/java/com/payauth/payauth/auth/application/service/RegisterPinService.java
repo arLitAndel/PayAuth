@@ -1,11 +1,10 @@
-package com.payauth.payauth.auth.application.port;
+package com.payauth.payauth.auth.application.service;
 
 import com.payauth.payauth.auth.application.port.in.RegisterPinUseCase;
 import com.payauth.payauth.auth.application.port.out.PinEncryptor;
 import com.payauth.payauth.auth.application.port.out.SaveAuthCredentialPort;
 import com.payauth.payauth.auth.domain.AuthCredential;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
