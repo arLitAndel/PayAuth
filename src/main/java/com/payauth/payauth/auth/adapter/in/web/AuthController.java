@@ -12,19 +12,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth/otp")
 @RequiredArgsConstructor
 public class AuthController {
     private final SendOtpUseCase sendOtpUseCase;
-    private final VerifyOtpUseCase verifyOtpUseCase;
-    private final VerifyPinUseCase verifyPinUseCase;
+    //private final VerifyOtpUseCase verifyOtpUseCase;
+    //private final VerifyPinUseCase verifyPinUseCase;
     private final AuthWebMapper authWebMapper;
 
     // 1단계: OTP 발송
-    @PostMapping("/otp/send")
-    public ResponseEntity<Void> sendOtp( @RequestBody @Valid OtpSendRequest request) {
+    @PostMapping("/send")
+    public ResponseEntity<String> sendOtp( @RequestBody @Valid OtpSendRequest request) {
         var command = authWebMapper.toSendOtpCommand(request);
         sendOtpUseCase.sendOtp(command);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("인증 번호를 발송하였습니다");
     }
 }
