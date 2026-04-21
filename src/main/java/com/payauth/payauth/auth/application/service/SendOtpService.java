@@ -29,7 +29,7 @@ public class SendOtpService implements SendOtpUseCase {
     private final CryptoUtil cryptoUtil;
 
     @Override
-    public void sendOtp(sendOtpCommand command) {
+    public void sendOtp(SendOtpCommand command) {
 
         String phoneNumber = command.phoneNumber();
         String phoneHash = cryptoUtil.hash(command.phoneNumber());

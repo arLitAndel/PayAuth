@@ -1,11 +1,9 @@
 package com.payauth.payauth.auth.application.port.in;
 
-import jakarta.security.auth.message.AuthException;
-
 public interface SendOtpUseCase {
-    void sendOtp(sendOtpCommand command);
+    void sendOtp(SendOtpCommand command);
 
-    record sendOtpCommand(
+    record SendOtpCommand(
             String phoneNumber,
             String name
     ) {}

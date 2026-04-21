@@ -1,10 +1,14 @@
 package com.payauth.payauth.auth.adapter.in.web;
 
-import com.payauth.payauth.auth.adapter.in.web.dto.OtpSendRequest;
+import com.payauth.payauth.auth.adapter.in.web.dto.*;
+import com.payauth.payauth.auth.application.port.in.PinVerifyResult;
 import com.payauth.payauth.auth.application.port.in.SendOtpUseCase;
+import com.payauth.payauth.auth.application.port.in.VerifyOtpUseCase;
+import com.payauth.payauth.auth.application.port.in.VerifyPinUseCase;
 import jakarta.security.auth.message.AuthException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,19 +16,40 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth/otp")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final SendOtpUseCase sendOtpUseCase;
-    //private final VerifyOtpUseCase verifyOtpUseCase;
-    //private final VerifyPinUseCase verifyPinUseCase;
+    private final VerifyOtpUseCase verifyOtpUseCase;
+    private final VerifyPinUseCase verifyPinUseCase;
     private final AuthWebMapper authWebMapper;
 
     // 1단계: OTP 발송
-    @PostMapping("/send")
+    @PostMapping("/otp/send")
     public ResponseEntity<String> sendOtp( @RequestBody @Valid OtpSendRequest request) {
         var command = authWebMapper.toSendOtpCommand(request);
         sendOtpUseCase.sendOtp(command);
         return ResponseEntity.ok("인증 번호를 발송하였습니다");
+    }
+
+    // 2단계: OTP 검증 → 검증 토큰 반환
+    @PostMapping("/otp/verify")
+    public ResponseEntity<OtpVerifyResponse> verifyOtp(@RequestBody @Valid OtpVerifyRequest request) {
+        var command = authWebMapper.toVerifyOtpCommand(request);
+        String verifiedToken = verifyOtpUseCase.verifyOtp(command);
+        return ResponseEntity.ok(new OtpVerifyResponse(verifiedToken));
+    }
+
+    // 3단계: 핀번호 검증 (본인확인 완료)
+    @PostMapping("/pin/verify")
+    public ResponseEntity<PinVerifyResponse> verifyPin(@RequestBody @Valid PinVerifyRequest request) {
+        var command = authWebMapper.toVerifyPinCommand(request);
+        PinVerifyResult result = verifyPinUseCase.verifyPin(command);
+        PinVerifyResponse response = authWebMapper.toPinVerifyResponse(result);
+
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 }

@@ -71,6 +71,11 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void lock() {
+        this.userStatus = UserStatus.LOCKED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void block() {
         this.userStatus = UserStatus.BLOCKED;
         this.updatedAt = LocalDateTime.now();
@@ -122,6 +127,10 @@ public class User {
 
     public boolean isDeleted() {
         return this.userStatus == UserStatus.DELETED;
+    }
+
+    public boolean isLocked() {
+        return this.userStatus == UserStatus.LOCKED;
     }
 
     public boolean isBlocked() {

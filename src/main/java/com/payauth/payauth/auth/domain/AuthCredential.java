@@ -18,7 +18,6 @@ public class AuthCredential {
     private String pinCode;
     private LocalDateTime expiresAt;
     private Boolean verified;
-    private Integer attemptCount;
     private Integer consecutiveFailCount;
     private LocalDateTime blockedUntil;
     private LocalDateTime createdAt;
@@ -30,7 +29,6 @@ public class AuthCredential {
         credential.userId = userId;
         credential.pinCode = encryptor.encrypt(rawPin);
         credential.verified = true;
-        credential.attemptCount = 0;
         credential.consecutiveFailCount = 0;
         credential.blockedUntil = null;
         credential.createdAt = LocalDateTime.now();
@@ -48,7 +46,6 @@ public class AuthCredential {
 
     // 인증 실패 시
     public void incrementFailCount() {
-        this.attemptCount++;
         this.consecutiveFailCount++;
 
         if (this.consecutiveFailCount >= 5) {

@@ -50,7 +50,8 @@ public enum ErrorCode {
     INVALID_VERIFICATION_CODE(400, "S002", "인증 번호가 일치하지 않습니다."),
     INVALID_SIGNUP_TOKEN(401, "S003", "유효하지 않거나 만료된 가입 토큰입니다."),
     TOO_MANY_RESEND_ATTEMPTS(429, "S004", "인증 번호 재발송 횟수를 초과했습니다. 잠시 후 다시 시도해주세요."),
-    SMS_SEND_FAILED(503, "S003", "인증 문자 발송에 실패했습니다. 관리자에게 문의하거나 다시 시도해주세요.");
+    OTP_ATTEMPT_BLOCKED(429, "S005", "OTP 인증 시도 횟수를 초과했습니다. 10분 후 다시 시도해주세요."),
+    SMS_SEND_FAILED(503, "S006", "인증 문자 발송에 실패했습니다. 관리자에게 문의하거나 다시 시도해주세요.");
 
 
     private final int httpStatus;
