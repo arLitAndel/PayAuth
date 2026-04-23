@@ -44,16 +44,11 @@ public class VerifyPinService implements VerifyPinUseCase {
         User user = loadUserPort.findByPhoneNumberHash(phoneHash)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 3. 잠김 상태 확인
-        if (user.isLocked() || user.isBlocked()) {
-            return PinVerifyResult.locked(null);
-        }
-
-        // 4. AuthCredential 조회
+        // 3. AuthCredential 조회
         AuthCredential credential = loadAuthCredentialPort.loadByUserId(user.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_CREDENTIAL_NOT_FOUND));
 
-        // 5. PIN 검증
+        // 4. PIN 검증
         if (!pinEncryptor.verify(command.pin(), credential.getPinCode())) {
             credential.incrementFailCount();
             saveAuthCredentialPort.saveAuthCredential(credential);

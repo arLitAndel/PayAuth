@@ -41,11 +41,16 @@ public class SendOtpService implements SendOtpUseCase {
             throw new BusinessException(ErrorCode.INVALID_AUTH_INFO);
         }
 
-        // 2. OTP 생성 + Redis 저장
+        // 2. 회원 상태 검증 (잠김/차단 상태이면 OTP 발송 불가)
+        if (user.isLocked() || user.isBlocked()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
+        // 3. OTP 생성 + Redis 저장
         String otp = generateOtp();
         saveOtpPort.save(phoneNumber, otp, OTP_TTL_SECONDS);
 
-        // 3. SMS 발송 (Mock - 콘솔 출력)
+        // 4. SMS 발송 (일단 nurigo SDK 발송, 향후 mock 으로 전환해보기)
         smsPort.send(phoneNumber, "[본인확인] 인증번호 [" + otp + "]를 입력해주세요. (3분 이내 입력)");
     }
 

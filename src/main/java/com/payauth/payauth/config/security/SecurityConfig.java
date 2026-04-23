@@ -20,8 +20,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/users/signup/**").permitAll() // 회원가입은 인증 없이 허용
                     .requestMatchers("/users/login").permitAll()     // 로그인도 허용
-                    .requestMatchers("/auth/otp/**").permitAll()      // 인증번호 발송 허용
-                    .requestMatchers("/h2-console/**").permitAll()    // H2 콘솔 (개발용)
+                    .requestMatchers("/auth/**/**").permitAll()      // 핀번호인증 허용
+                    .requestMatchers("/h2-console/**").permitAll()   // H2 콘솔 (개발용)
                     .anyRequest().authenticated()                      // 나머지는 인증 필요
             )
             .sessionManagement(session ->
