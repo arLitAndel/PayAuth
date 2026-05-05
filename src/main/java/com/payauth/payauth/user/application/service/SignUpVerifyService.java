@@ -37,7 +37,7 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
             throw new BusinessException(ErrorCode.INVALID_VERIFICATION_CODE);
         }
 
-        // 3. [핵심] 기존 PENDING 유저인지 조회
+        // 3. 기존 PENDING 유저인지 조회
         String phoneHash = cryptoUtil.hash(session.phoneNumber());
         Optional<User> existingUser = loadUserPort.findByPhoneNumberHash(phoneHash);
 
@@ -59,7 +59,7 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
         signUpSessionPort.deleteVerificationSession(session.phoneNumber());
         String signUpToken = UUID.randomUUID().toString();
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(10);
-        signUpSessionPort.savePinRegisterToken(signUpToken, savedUser.getId()); // TTL 10분
+        signUpSessionPort.savePinRegisterToken(signUpToken, savedUser.getUserId()); // TTL 10분
 
         return new Result(signUpToken, expiredAt);
     }

@@ -45,7 +45,7 @@ public class VerifyPinService implements VerifyPinUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 3. AuthCredential 조회
-        AuthCredential credential = loadAuthCredentialPort.loadByUserId(user.getId())
+        AuthCredential credential = loadAuthCredentialPort.loadByUserId(user.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_CREDENTIAL_NOT_FOUND));
 
         // 4. PIN 검증
@@ -59,12 +59,12 @@ public class VerifyPinService implements VerifyPinUseCase {
             if (failCount >= MAX_PIN_ATTEMPTS) {
                 user.lock();
                 saveUserPort.saveUser(user);
-                return PinVerifyResult.locked(null);
+                return PinVerifyResult.locked("핀번호 5회 인증 실패로 계정이 잠김 상태로 변경되었습니다.");
             }
 
             int remaining = MAX_PIN_ATTEMPTS - failCount;
             String message = failCount >= WARNING_THRESHOLD
-                    ? "핀번호가 일치하지 않습니다. 5회 이상 실패 시 잠김 상태로 변경됩니다."
+                    ? "핀번호가 일치하지 않습니다. 5회 이상 실패 시 잠김 상태로 변경됩니다(남은 횟수:" + remaining +")"
                     : "핀번호가 일치하지 않습니다.";
 
             return PinVerifyResult.failure(remaining, message);

@@ -22,7 +22,7 @@ public class UserWebMapper {
 
     public UserResponse toResponse(User user) {
         return new UserResponse(
-                user.getId(),
+                user.getUserId(),
                 user.getName(),
                 user.getPhoneNumber(),
                 user.getUserStatus().name()

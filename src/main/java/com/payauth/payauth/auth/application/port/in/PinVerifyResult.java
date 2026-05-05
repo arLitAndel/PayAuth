@@ -40,12 +40,12 @@ public class PinVerifyResult {
                 .build();
     }
 
-    public static PinVerifyResult locked(LocalDateTime lockedUntil) {
+    public static PinVerifyResult locked(String message) {
         return PinVerifyResult.builder()
                 .success(false)
                 .locked(true)
                 .remainingAttempts(0)
-                .lockedUntil(lockedUntil)
+                .message(message)
                 .build();
     }
 }

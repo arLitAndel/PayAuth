@@ -4,8 +4,11 @@ import com.payauth.payauth.auth.application.port.in.RegisterPinUseCase;
 import com.payauth.payauth.common.crypto.CryptoUtil;
 import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
-import com.payauth.payauth.common.sms.SmsPort;
+import com.payauth.payauth.common.identity.IdentityVerificationPort;
+import com.payauth.payauth.common.identity.IdentityVerificationRequest;
+import com.payauth.payauth.common.identity.VerificationPurpose;
 import com.payauth.payauth.common.util.MaskUtil;
+import com.payauth.payauth.common.util.OtpUtil;
 import com.payauth.payauth.user.adapter.in.web.dto.SignUpResponse;
 import com.payauth.payauth.user.application.port.dto.SignUpSession;
 import com.payauth.payauth.user.application.port.in.SignUpRequestUseCase;
@@ -32,7 +35,7 @@ import java.util.UUID;
 public class SignUpRequestService implements SignUpRequestUseCase {
 
     private final CheckUserDuplicationPort checkUserDuplicationPort;
-    private final SmsPort smsPort;                      // SMS 발송 포트
+    private final IdentityVerificationPort identityVerificationPort; // 본인인증 포트 (운영: 다날/KCB, 로컬: Mock)
     private final SignUpSessionPort signUpSessionPort; // Redis 포트
     private final LoadUserPort loadUserPort;
     private final CryptoUtil cryptoUtil;
@@ -56,7 +59,7 @@ public class SignUpRequestService implements SignUpRequestUseCase {
                     MaskUtil.maskPhone(phoneNumber));
         });
 
-        // 2. 재발송 횟수 체크 및 증가 (Atomic 연산 권장)
+        // 2. 재발송 횟수 체크
         int resendCount = signUpSessionPort.incrementResendCount(phoneNumber);
         if (resendCount > MAX_RESEND_COUNT) {
             log.warn("[REGISTER_BLOCKED] Too many resend attempts. Phone: {}", MaskUtil.maskPhone(phoneNumber));
@@ -64,15 +67,21 @@ public class SignUpRequestService implements SignUpRequestUseCase {
         }
 
         // 3. 인증 코드 + verificationId 생성
-        String verificationCode = generateVerificationCode();
+        String verificationCode = OtpUtil.generateOtp();
         String verificationId = UUID.randomUUID().toString();
 
-        // 4. SMS 발송
+        // 4. 본인인증 요청 (운영: 다날/KCB 어댑터, 로컬: Mock 어댑터)
         try {
-            smsPort.send(phoneNumber, verificationCode);
+            identityVerificationPort.requestVerification(new IdentityVerificationRequest(
+                    command.name(),
+                    phoneNumber,
+                    verificationCode,
+                    VerificationPurpose.SIGN_UP
+            ));
         } catch (Exception e) {
-            log.error("[SMS_ERROR] Failed to send verification code to {}", MaskUtil.maskPhone(phoneNumber), e);
-            // 문자 발송 예외를 던져 이후 세션 저장(5번)을 막음
+            log.error("[IDENTITY_VERIFICATION_ERROR] Failed to send sign-up verification to {}",
+                    MaskUtil.maskPhone(phoneNumber), e);
+            // 본인인증 발송 실패 시 재발송 카운트 롤백 후 세션 저장(5번)을 막음
             signUpSessionPort.decrementResendCount(phoneNumber);
             throw new BusinessException(ErrorCode.SMS_SEND_FAILED);
         }
@@ -90,7 +99,4 @@ public class SignUpRequestService implements SignUpRequestUseCase {
         return new SignUpResponse(verificationId, MaskUtil.maskPhone(phoneNumber), expiredAt);
     }
 
-    private String generateVerificationCode() {
-        return String.format("%06d", RANDOM.nextInt(1_000_000));
-    }
 }

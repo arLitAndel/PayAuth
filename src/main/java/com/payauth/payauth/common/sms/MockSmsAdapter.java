@@ -7,10 +7,11 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class MockSmsAdapter implements IdentityVerificationPort {
+@Profile("local")
+public class MockSmsAdapter implements SmsPort {
 
     @Override
     public void send(String phoneNumber, String code) {
-        log.info("[otp 인증] Phone: {} | Code: {}", MaskUtil.maskPhone(phoneNumber), code);
+        log.info("[MOCK SMS] Phone: {} | OTP: {}", MaskUtil.maskPhone(phoneNumber), code);
     }
 }

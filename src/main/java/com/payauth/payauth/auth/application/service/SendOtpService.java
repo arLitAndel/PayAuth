@@ -1,21 +1,18 @@
 package com.payauth.payauth.auth.application.service;
 
-import com.payauth.payauth.auth.adapter.in.web.AuthWebMapper;
 import com.payauth.payauth.auth.application.port.in.SendOtpUseCase;
-import com.payauth.payauth.auth.application.port.out.LoadUserForAuthPort;
 import com.payauth.payauth.auth.application.port.out.SaveOtpPort;
 import com.payauth.payauth.common.crypto.CryptoUtil;
-import com.payauth.payauth.common.crypto.StringCryptoConverter;
 import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
-import com.payauth.payauth.common.sms.SmsPort;
+import com.payauth.payauth.common.identity.IdentityVerificationPort;
+import com.payauth.payauth.common.identity.IdentityVerificationRequest;
+import com.payauth.payauth.common.identity.VerificationPurpose;
+import com.payauth.payauth.common.util.OtpUtil;
 import com.payauth.payauth.user.application.port.out.LoadUserPort;
 import com.payauth.payauth.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.security.SecureRandom;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +22,7 @@ public class SendOtpService implements SendOtpUseCase {
 
     private final LoadUserPort loadUserPort;
     private final SaveOtpPort saveOtpPort;
-    private final SmsPort smsPort;
+    private final IdentityVerificationPort identityVerificationPort; // 운영: 다날/KCB, 로컬: Mock
     private final CryptoUtil cryptoUtil;
 
     @Override
@@ -41,20 +38,22 @@ public class SendOtpService implements SendOtpUseCase {
             throw new BusinessException(ErrorCode.INVALID_AUTH_INFO);
         }
 
-        // 2. 회원 상태 검증 (잠김/차단 상태이면 OTP 발송 불가)
-        if (user.isLocked() || user.isBlocked()) {
+        // 2. 회원 상태 검증 (active 상태가 아니면 OTP 발송 불가)
+        if (!user.isActive()) {
             throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
         }
 
         // 3. OTP 생성 + Redis 저장
-        String otp = generateOtp();
+        String otp = OtpUtil.generateOtp();
         saveOtpPort.save(phoneNumber, otp, OTP_TTL_SECONDS);
 
-        // 4. SMS 발송 (일단 nurigo SDK 발송, 향후 mock 으로 전환해보기)
-        smsPort.send(phoneNumber, "[본인확인] 인증번호 [" + otp + "]를 입력해주세요. (3분 이내 입력)");
+        // 4. 본인인증 요청 (운영: 다날/KCB 어댑터, 로컬: Mock 어댑터)
+        identityVerificationPort.requestVerification(new IdentityVerificationRequest(
+                command.name(),
+                phoneNumber,
+                otp,
+                VerificationPurpose.OTP_LOGIN
+        ));
     }
 
-    private String generateOtp() {
-        return String.format("%06d", new SecureRandom().nextInt(1_000_000));
-    }
 }

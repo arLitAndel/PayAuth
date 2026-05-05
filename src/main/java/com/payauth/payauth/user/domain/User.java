@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class User {
 
-    private Long id;
+    private Long userId;
     private String name;
     private String phoneNumber;      //복호화용
     private String phoneNumberHash;  //중복체크용
@@ -39,9 +39,9 @@ public class User {
     }
 
     // DB 복원용 전용 메서드 (Mapper에서 사용) (찾을 때 사용이었던 걸로 기억함...)
-    public static User withId(Long id, String name, String phoneNumber, String phoneNumberHash, String birthDate, UserStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
+    public static User withId(Long userId, String name, String phoneNumber, String phoneNumberHash, String birthDate, UserStatus status, LocalDateTime createdAt, LocalDateTime updatedAt,
                               LocalDateTime deletedAt) {
-        return new User(id, name, phoneNumber, phoneNumberHash, birthDate, status,  createdAt, updatedAt, deletedAt);
+        return new User(userId, name, phoneNumber, phoneNumberHash, birthDate, status, createdAt, updatedAt, deletedAt);
     }
 
     // === 비즈니스 로직 ===
@@ -73,6 +73,18 @@ public class User {
 
     public void lock() {
         this.userStatus = UserStatus.LOCKED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 본인인증(SMS OTP) 성공 후 잠긴 계정을 다시 활성화한다.
+     * LOCKED 상태일 때만 호출 가능하다.
+     */
+    public void unlock() {
+        if (this.userStatus != UserStatus.LOCKED) {
+            throw new BusinessException(ErrorCode.ACCOUNT_NOT_LOCKED);
+        }
+        this.userStatus = UserStatus.ACTIVE;
         this.updatedAt = LocalDateTime.now();
     }
 
