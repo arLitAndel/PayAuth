@@ -1,6 +1,7 @@
 package com.payauth.payauth.auth.adapter.in.web;
 
 import com.payauth.payauth.auth.adapter.in.web.dto.ChangePinRequest;
+import com.payauth.payauth.auth.adapter.in.web.dto.LoginResponse;
 import com.payauth.payauth.auth.adapter.in.web.dto.OtpSendRequest;
 import com.payauth.payauth.auth.adapter.in.web.dto.OtpVerifyRequest;
 import com.payauth.payauth.auth.adapter.in.web.dto.PinChangeResponse;
@@ -16,6 +17,7 @@ import com.payauth.payauth.auth.application.port.in.PinVerifyResult;
 import com.payauth.payauth.auth.application.port.in.ResetPinUseCase.ResetPinCommand;
 import com.payauth.payauth.auth.application.port.in.SendOtpUseCase.SendOtpCommand;
 import com.payauth.payauth.auth.application.port.in.SendUnlockOtpUseCase.SendUnlockOtpCommand;
+import com.payauth.payauth.auth.application.port.in.TokenPair;
 import com.payauth.payauth.auth.application.port.in.UnlockAccountUseCase.UnlockAccountCommand;
 import com.payauth.payauth.auth.application.port.in.VerifyOtpUseCase.VerifyOtpCommand;
 import com.payauth.payauth.auth.application.port.in.VerifyPinUseCase.VerifyPinCommand;
@@ -28,7 +30,8 @@ public class AuthWebMapper {
     public SendOtpCommand toSendOtpCommand(OtpSendRequest request) {
         return new SendOtpCommand(
                 request.getPhoneNumber(),
-                request.getName()
+                request.getName(),
+                request.getBirthDate()
         );
     }
 
@@ -115,6 +118,22 @@ public class AuthWebMapper {
                 .locked(result.isLocked())
                 .remainingAttempts(result.getRemainingAttempts())
                 .message(result.getMessage())
+                .build();
+    }
+
+    /**
+     * 로그인/재발급 결과 {@link TokenPair} 를 클라이언트 응답 DTO 로 변환한다.
+     *
+     * <p>{@code tokenType} 은 항상 {@code "Bearer"} — 클라이언트가
+     * {@code Authorization: Bearer <accessToken>} 형식으로 헤더를 구성할 수 있도록 함께 내려준다.</p>
+     */
+    public LoginResponse toLoginResponse(TokenPair pair) {
+        return LoginResponse.builder()
+                .accessToken(pair.accessToken())
+                .refreshToken(pair.refreshToken())
+                .accessTokenExpiresIn(pair.accessTokenExpiresInSec())
+                .refreshTokenExpiresIn(pair.refreshTokenExpiresInSec())
+                .tokenType("Bearer")
                 .build();
     }
 

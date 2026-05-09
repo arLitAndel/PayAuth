@@ -29,12 +29,15 @@ public class SendOtpService implements SendOtpUseCase {
     public void sendOtp(SendOtpCommand command) {
 
         String phoneNumber = command.phoneNumber();
+        String birthDate = command.birthDate();
         String phoneHash = cryptoUtil.hash(command.phoneNumber());
 
-        // 1. 폰번호 + 이름으로 회원 존재 여부 확인
+        // 1. 폰번호 + 이름 + 생일로 회원 존재 여부 확인
         User user = loadUserPort.findByPhoneNumberHash(phoneHash)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_AUTH_INFO));
         if (!user.getName().equals(command.name())) {
+            throw new BusinessException(ErrorCode.INVALID_AUTH_INFO);
+        } else if (!user.getBirthDate().equals(birthDate)) {
             throw new BusinessException(ErrorCode.INVALID_AUTH_INFO);
         }
 

@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
  *   1) verifiedToken → phoneNumber 조회 (만료/위조 시 거부)
  *   2) User 조회 + 상태 검증 (ACTIVE 만 허용)
  *   3) AuthCredential 조회 + 차단/만료 검사
- *   4) newPin == newPinConfirm 일치 검증
- *   5) 현재 PIN bcrypt 검증
+ *   4) 현재 PIN bcrypt 검증
  *        - 실패: 누적 실패 카운터++, 5회 누적 시 계정 LOCKED
+ *   5) newPin == newPinConfirm 일치 검증
  *   6) PinPolicy 통과 (형식/연속/반복/생일/현재PIN/이력)
  *   7) AuthCredential.changePin() 으로 갱신 (이력 push, 만료 1년 연장, 카운터 reset)
  *   8) 일회용 verifiedToken 즉시 폐기
@@ -68,12 +68,7 @@ public class ChangePinService implements ChangePinUseCase {
         AuthCredential credential = loadAuthCredentialPort.loadByUserId(user.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_CREDENTIAL_NOT_FOUND));
 
-        // 4. 확인 PIN 일치
-        if (!command.newPin().equals(command.newPinConfirm())) {
-            throw new BusinessException(ErrorCode.PIN_CONFIRM_MISMATCH);
-        }
-
-        // 5. 현재 PIN 검증 (실패 시 incrementFailCount + 5회 시 lock)
+        // 4. 현재 PIN 검증 (실패 시 incrementFailCount + 5회 시 lock)
         if (!pinEncryptor.verify(command.currentPin(), credential.getPinCode())) {
             credential.incrementFailCount();
             saveAuthCredentialPort.saveAuthCredential(credential);
@@ -94,6 +89,11 @@ public class ChangePinService implements ChangePinUseCase {
                     ? "현재 핀번호가 일치하지 않습니다. 5회 이상 실패 시 잠김 상태로 변경됩니다."
                     : "현재 핀번호가 일치하지 않습니다.";
             return PinChangeResult.failure(remaining, message);
+        }
+
+        // 5. 새 PIN 일치 확인
+        if (!command.newPin().equals(command.newPinConfirm())) {
+            throw new BusinessException(ErrorCode.PIN_CONFIRM_MISMATCH);
         }
 
         // 6. 새 PIN 정책 검증

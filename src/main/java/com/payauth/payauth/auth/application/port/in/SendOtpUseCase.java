@@ -5,6 +5,6 @@ public interface SendOtpUseCase {
 
     record SendOtpCommand(
             String phoneNumber,
-            String name
-    ) {}
+            String name,
+            String birthDate) {}
 }

@@ -16,4 +16,7 @@ public class OtpSendRequest {
     @NotBlank(message = "이름은 필수입니다.")
     private String name;
 
+    @NotBlank(message = "생년월일은 필수입니다.")
+    private String birthDate;
+
 }
