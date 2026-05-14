@@ -1,10 +1,12 @@
 package com.payauth.payauth.auth.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.ResetPinUseCase;
-import com.payauth.payauth.auth.application.port.out.DeleteVerifiedTokenPort;
 import com.payauth.payauth.auth.application.port.out.LoadAuthCredentialPort;
-import com.payauth.payauth.auth.application.port.out.LoadVerifiedTokenPort;
 import com.payauth.payauth.auth.application.port.out.PinEncryptor;
+import com.payauth.payauth.auth.application.port.out.PinResetVerifiedTokenPort;
 import com.payauth.payauth.auth.application.port.out.SaveAuthCredentialPort;
 import com.payauth.payauth.auth.domain.AuthCredential;
 import com.payauth.payauth.common.crypto.CryptoUtil;
@@ -44,8 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ResetPinService implements ResetPinUseCase {
 
-    private final LoadVerifiedTokenPort loadVerifiedTokenPort;
-    private final DeleteVerifiedTokenPort deleteVerifiedTokenPort;
+    private final PinResetVerifiedTokenPort pinResetVerifiedTokenPort;
     private final LoadUserPort loadUserPort;
     private final SaveUserPort saveUserPort;
     private final LoadAuthCredentialPort loadAuthCredentialPort;
@@ -53,12 +54,13 @@ public class ResetPinService implements ResetPinUseCase {
     private final PinEncryptor pinEncryptor;
     private final PinPolicy pinPolicy;
     private final CryptoUtil cryptoUtil;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     @Transactional
     public void resetPin(ResetPinCommand command) {
-        // 1. verifiedToken → phone
-        String phoneNumber = loadVerifiedTokenPort.load(command.verifiedToken())
+        // 1. verifiedToken → phone (PIN 재설정 전용 토큰 네임스페이스 사용)
+        String phoneNumber = pinResetVerifiedTokenPort.load(command.verifiedToken())
                 .orElseThrow(() -> new BusinessException(ErrorCode.VERIFICATION_SESSION_NOT_FOUND));
 
         // 2. User 조회 + 상태 검증 (ACTIVE / LOCKED 만 허용)
@@ -96,8 +98,9 @@ public class ResetPinService implements ResetPinUseCase {
         }
 
         // 8. 일회용 토큰 폐기
-        deleteVerifiedTokenPort.delete(command.verifiedToken());
+        pinResetVerifiedTokenPort.delete(command.verifiedToken());
 
+        saveActivityPort.record(user.getUserId(), ActivityCategory.PIN_CHANGE, ActivityAction.PIN_RESET, true, null);
         log.info("[PIN_RESET] userId: {}, phone: {}, unlockedFromLocked: {}",
                 user.getUserId(), MaskUtil.maskPhone(phoneNumber), wasLocked);
     }

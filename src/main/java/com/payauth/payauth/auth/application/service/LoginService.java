@@ -1,5 +1,8 @@
 package com.payauth.payauth.auth.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.LoginUseCase;
 import com.payauth.payauth.auth.application.port.in.TokenPair;
 import com.payauth.payauth.auth.application.port.out.DeleteVerifiedTokenPort;
@@ -44,6 +47,7 @@ public class LoginService implements LoginUseCase {
     private final CryptoUtil cryptoUtil;
     private final TokenIssuerPort tokenIssuerPort;
     private final RefreshTokenStorePort refreshTokenStorePort;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     @Transactional(noRollbackFor = BusinessException.class)
@@ -75,8 +79,10 @@ public class LoginService implements LoginUseCase {
             if (credential.getConsecutiveFailCount() >= MAX_PIN_ATTEMPTS) {
                 user.lock();
                 saveUserPort.saveUser(user);
+                saveActivityPort.record(user.getUserId(), ActivityCategory.ACCESS, ActivityAction.LOGIN, false, ErrorCode.ACCOUNT_LOCKED.getCode());
                 throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
             }
+            saveActivityPort.record(user.getUserId(), ActivityCategory.ACCESS, ActivityAction.LOGIN, false, ErrorCode.PIN_VERIFICATION_FAILED.getCode());
             throw new BusinessException(ErrorCode.PIN_VERIFICATION_FAILED);
         }
 
@@ -95,6 +101,8 @@ public class LoginService implements LoginUseCase {
                 refreshToken,
                 tokenIssuerPort.getRefreshTokenValiditySeconds()
         );
+
+        saveActivityPort.record(user.getUserId(), ActivityCategory.ACCESS, ActivityAction.LOGIN, true, null);
 
         return new TokenPair(
                 accessToken,

@@ -1,5 +1,8 @@
 package com.payauth.payauth.auth.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.PinVerifyResult;
 import com.payauth.payauth.auth.application.port.in.VerifyPinUseCase;
 import com.payauth.payauth.auth.application.port.out.LoadAuthCredentialPort;
@@ -31,6 +34,7 @@ public class VerifyPinService implements VerifyPinUseCase {
     private final SaveUserPort saveUserPort;
     private final PinEncryptor pinEncryptor;
     private final CryptoUtil cryptoUtil;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     @Transactional
@@ -59,6 +63,7 @@ public class VerifyPinService implements VerifyPinUseCase {
             if (failCount >= MAX_PIN_ATTEMPTS) {
                 user.lock();
                 saveUserPort.saveUser(user);
+                saveActivityPort.record(user.getUserId(), ActivityCategory.AUTH, ActivityAction.PIN_VERIFY, false, "ACCOUNT_LOCKED");
                 return PinVerifyResult.locked("핀번호 5회 인증 실패로 계정이 잠김 상태로 변경되었습니다.");
             }
 
@@ -67,6 +72,7 @@ public class VerifyPinService implements VerifyPinUseCase {
                     ? "핀번호가 일치하지 않습니다. 5회 이상 실패 시 잠김 상태로 변경됩니다(남은 횟수:" + remaining +")"
                     : "핀번호가 일치하지 않습니다.";
 
+            saveActivityPort.record(user.getUserId(), ActivityCategory.AUTH, ActivityAction.PIN_VERIFY, false, "PIN_MISMATCH");
             return PinVerifyResult.failure(remaining, message);
         }
 
@@ -74,6 +80,7 @@ public class VerifyPinService implements VerifyPinUseCase {
         credential.markAsVerified();
         saveAuthCredentialPort.saveAuthCredential(credential);
 
+        saveActivityPort.record(user.getUserId(), ActivityCategory.AUTH, ActivityAction.PIN_VERIFY, true, null);
         return PinVerifyResult.success();
     }
 }

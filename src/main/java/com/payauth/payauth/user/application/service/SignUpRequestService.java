@@ -1,5 +1,8 @@
 package com.payauth.payauth.user.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.RegisterPinUseCase;
 import com.payauth.payauth.common.crypto.CryptoUtil;
 import com.payauth.payauth.common.error.BusinessException;
@@ -35,10 +38,11 @@ import java.util.UUID;
 public class SignUpRequestService implements SignUpRequestUseCase {
 
     private final CheckUserDuplicationPort checkUserDuplicationPort;
-    private final IdentityVerificationPort identityVerificationPort; // 본인인증 포트 (운영: 다날/KCB, 로컬: Mock)
-    private final SignUpSessionPort signUpSessionPort; // Redis 포트
+    private final IdentityVerificationPort identityVerificationPort;
+    private final SignUpSessionPort signUpSessionPort;
     private final LoadUserPort loadUserPort;
     private final CryptoUtil cryptoUtil;
+    private final SaveActivityPort saveActivityPort;
 
     // SecureRandom 인스턴스 재사용
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -46,7 +50,15 @@ public class SignUpRequestService implements SignUpRequestUseCase {
 
     @Override
     public SignUpResponse request(SignUpRequestCommand command) {
+        try {
+            return doRequest(command);
+        } catch (BusinessException e) {
+            saveActivityPort.record(null, ActivityCategory.SIGN_UP, ActivityAction.SIGN_UP_REQUEST, false, e.getErrorCode().getCode());
+            throw e;
+        }
+    }
 
+    private SignUpResponse doRequest(SignUpRequestCommand command) {
         String phoneNumber = command.phoneNumber();
 
         // 1. 중복 체크 (가장 먼저 수행하여 불필요한 리소스 방지)
@@ -81,7 +93,6 @@ public class SignUpRequestService implements SignUpRequestUseCase {
         } catch (Exception e) {
             log.error("[IDENTITY_VERIFICATION_ERROR] Failed to send sign-up verification to {}",
                     MaskUtil.maskPhone(phoneNumber), e);
-            // 본인인증 발송 실패 시 재발송 카운트 롤백 후 세션 저장(5번)을 막음
             signUpSessionPort.decrementResendCount(phoneNumber);
             throw new BusinessException(ErrorCode.SMS_SEND_FAILED);
         }
@@ -92,7 +103,7 @@ public class SignUpRequestService implements SignUpRequestUseCase {
                 new SignUpSession(command.name(), command.birthDate(), phoneNumber, verificationCode)
         );
 
-
+        saveActivityPort.record(null, ActivityCategory.SIGN_UP, ActivityAction.SIGN_UP_REQUEST, true, null);
         log.info("[REGISTER_TRY] Verification code sent. Name: {}, Phone: {}",
                 MaskUtil.maskName(command.name()), MaskUtil.maskPhone(phoneNumber));
 

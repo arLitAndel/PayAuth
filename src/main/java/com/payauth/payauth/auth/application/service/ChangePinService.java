@@ -1,5 +1,8 @@
 package com.payauth.payauth.auth.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.ChangePinUseCase;
 import com.payauth.payauth.auth.application.port.in.PinChangeResult;
 import com.payauth.payauth.auth.application.port.out.DeleteVerifiedTokenPort;
@@ -52,6 +55,7 @@ public class ChangePinService implements ChangePinUseCase {
     private final PinEncryptor pinEncryptor;
     private final PinPolicy pinPolicy;
     private final CryptoUtil cryptoUtil;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     @Transactional
@@ -80,6 +84,7 @@ public class ChangePinService implements ChangePinUseCase {
                 saveUserPort.saveUser(user);
                 log.warn("[PIN_CHANGE_LOCKED] userId: {}, phone: {}",
                         user.getUserId(), MaskUtil.maskPhone(phoneNumber));
+                saveActivityPort.record(user.getUserId(), ActivityCategory.PIN_CHANGE, ActivityAction.PIN_CHANGE, false, "ACCOUNT_LOCKED");
                 return PinChangeResult.locked(
                         "현재 핀번호 5회 인증 실패로 계정이 잠김 상태로 변경되었습니다.");
             }
@@ -88,6 +93,7 @@ public class ChangePinService implements ChangePinUseCase {
             String message = failCount >= WARNING_THRESHOLD
                     ? "현재 핀번호가 일치하지 않습니다. 5회 이상 실패 시 잠김 상태로 변경됩니다."
                     : "현재 핀번호가 일치하지 않습니다.";
+            saveActivityPort.record(user.getUserId(), ActivityCategory.PIN_CHANGE, ActivityAction.PIN_CHANGE, false, "PIN_MISMATCH");
             return PinChangeResult.failure(remaining, message);
         }
 
@@ -111,6 +117,7 @@ public class ChangePinService implements ChangePinUseCase {
         // 8. 일회용 토큰 폐기
         deleteVerifiedTokenPort.delete(command.verifiedToken());
 
+        saveActivityPort.record(user.getUserId(), ActivityCategory.PIN_CHANGE, ActivityAction.PIN_CHANGE, true, null);
         log.info("[PIN_CHANGED] userId: {}, phone: {}",
                 user.getUserId(), MaskUtil.maskPhone(phoneNumber));
 

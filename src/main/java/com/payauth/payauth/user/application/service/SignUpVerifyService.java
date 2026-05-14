@@ -1,5 +1,8 @@
 package com.payauth.payauth.user.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.common.crypto.CryptoUtil;
 import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
@@ -24,9 +27,19 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
     private final SaveUserPort saveUserPort;
     private final LoadUserPort loadUserPort;
     private final CryptoUtil cryptoUtil;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     public Result verify(SignUpVerifyCommand command) {
+        try {
+            return doVerify(command);
+        } catch (BusinessException e) {
+            saveActivityPort.record(null, ActivityCategory.SIGN_UP, ActivityAction.SIGN_UP_VERIFY, false, e.getErrorCode().getCode());
+            throw e;
+        }
+    }
+
+    private Result doVerify(SignUpVerifyCommand command) {
         // 1. Redis에서 세션 조회
         SignUpSession session = signUpSessionPort
                 .getVerificationSession(command.verificationId())
@@ -55,11 +68,13 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
             savedUser = existingUser.get(); // PENDING 유저면 기존 유저 그대로 사용
         }
 
-        // 4. 인증 세션 삭제 + 핀 등록용 임시 토큰 저장
+        // 5. 인증 세션 삭제 + 핀 등록용 임시 토큰 저장
         signUpSessionPort.deleteVerificationSession(session.phoneNumber());
         String signUpToken = UUID.randomUUID().toString();
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(10);
         signUpSessionPort.savePinRegisterToken(signUpToken, savedUser.getUserId()); // TTL 10분
+
+        saveActivityPort.record(savedUser.getUserId(), ActivityCategory.SIGN_UP, ActivityAction.SIGN_UP_VERIFY, true, null);
 
         return new Result(signUpToken, expiredAt);
     }

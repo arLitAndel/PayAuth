@@ -1,8 +1,11 @@
 package com.payauth.payauth.auth.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.VerifyOtpUseCase;
-import com.payauth.payauth.auth.application.port.out.OtpStorePort;
 import com.payauth.payauth.auth.application.port.out.OtpSecurityPort;
+import com.payauth.payauth.auth.application.port.out.OtpStorePort;
 import com.payauth.payauth.auth.application.port.out.SaveVerifiedTokenPort;
 import com.payauth.payauth.common.error.BusinessException;
 import com.payauth.payauth.common.error.ErrorCode;
@@ -23,6 +26,7 @@ public class VerifyOtpService implements VerifyOtpUseCase {
     private final OtpStorePort otpStorePort;
     private final OtpSecurityPort otpSecurityPort;
     private final SaveVerifiedTokenPort saveVerifiedTokenPort;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     public String verifyOtp(VerifyOtpCommand command) {
@@ -41,6 +45,7 @@ public class VerifyOtpService implements VerifyOtpUseCase {
                 otpSecurityPort.block(phoneNumber, OTP_BLOCK_TTL_SECONDS);
                 otpSecurityPort.deleteAttempt(phoneNumber);
             }
+            saveActivityPort.record(null, ActivityCategory.AUTH, ActivityAction.OTP_VERIFY, false, ErrorCode.INVALID_VERIFICATION_CODE.getCode());
             throw new BusinessException(ErrorCode.INVALID_VERIFICATION_CODE);
         }
 
@@ -51,6 +56,7 @@ public class VerifyOtpService implements VerifyOtpUseCase {
         otpStorePort.delete(phoneNumber);           //otp코드
         otpSecurityPort.deleteAttempt(phoneNumber); //시도횟수
 
+        saveActivityPort.record(null, ActivityCategory.AUTH, ActivityAction.OTP_VERIFY, true, null);
         return verifiedToken;
     }
 }

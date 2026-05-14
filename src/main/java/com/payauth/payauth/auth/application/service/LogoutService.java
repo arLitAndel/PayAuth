@@ -1,5 +1,8 @@
 package com.payauth.payauth.auth.application.service;
 
+import com.payauth.payauth.audit.application.port.out.SaveActivityPort;
+import com.payauth.payauth.audit.domain.ActivityAction;
+import com.payauth.payauth.audit.domain.ActivityCategory;
 import com.payauth.payauth.auth.application.port.in.LogoutUseCase;
 import com.payauth.payauth.auth.application.port.out.RefreshTokenStorePort;
 import com.payauth.payauth.auth.application.port.out.TokenBlacklistPort;
@@ -29,6 +32,7 @@ public class LogoutService implements LogoutUseCase {
     private final TokenIssuerPort tokenIssuerPort;
     private final TokenBlacklistPort tokenBlacklistPort;
     private final RefreshTokenStorePort refreshTokenStorePort;
+    private final SaveActivityPort saveActivityPort;
 
     @Override
     public void logout(LogoutCommand command) {
@@ -40,7 +44,8 @@ public class LogoutService implements LogoutUseCase {
 
         long remaining = claims.expiresAtEpochSec() - Instant.now().getEpochSecond();
         tokenBlacklistPort.blacklist(claims.jti(), remaining);
-
         refreshTokenStorePort.delete(claims.userId());
+
+        saveActivityPort.record(claims.userId(), ActivityCategory.ACCESS, ActivityAction.LOGOUT, true, null);
     }
 }

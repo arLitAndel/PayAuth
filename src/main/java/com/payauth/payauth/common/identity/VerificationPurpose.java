@@ -8,12 +8,12 @@ package com.payauth.payauth.common.identity;
  */
 public enum VerificationPurpose {
 
-    /** 회원가입 시 본인인증 */
+    /** 회원가입 시 외부 기관(다날/KCB) 점유 인증 */
     SIGN_UP,
 
-    /** OTP 로그인 시 본인인증 */
-    OTP_LOGIN,
-
     /** 잠긴 계정의 잠금 해제용 본인인증 */
-    ACCOUNT_UNLOCK
+    ACCOUNT_UNLOCK,
+
+    /** PIN 분실 시 재설정을 위한 강화 본인인증 */
+    PIN_RESET
 }

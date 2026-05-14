@@ -36,12 +36,14 @@ public class SecurityConfig {
                             "/auth/otp/verify",
                             "/auth/pin/verify",
                             "/auth/pin/reset",
+                            "/auth/pin/reset/otp/send",
+                            "/auth/pin/reset/otp/verify",
                             "/auth/login",
                             "/auth/reissue",
                             "/auth/unlock/**"
                     ).permitAll()
-                    // 로그아웃, PIN 변경 등은 access token 을 가진 인증된 사용자만
-                    .requestMatchers("/auth/logout", "/auth/pin/change").authenticated()
+                    // 로그아웃, PIN 변경, 이력 조회 등은 access token 을 가진 인증된 사용자만
+                    .requestMatchers("/auth/logout", "/auth/pin/change", "/activity/**").authenticated()
                     .requestMatchers("/h2-console/**").permitAll()   // H2 콘솔 (개발용)
                     .anyRequest().authenticated()
             )

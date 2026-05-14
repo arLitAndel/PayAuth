@@ -5,6 +5,8 @@ import com.payauth.payauth.auth.adapter.in.web.dto.LoginResponse;
 import com.payauth.payauth.auth.adapter.in.web.dto.OtpSendRequest;
 import com.payauth.payauth.auth.adapter.in.web.dto.OtpVerifyRequest;
 import com.payauth.payauth.auth.adapter.in.web.dto.PinChangeResponse;
+import com.payauth.payauth.auth.adapter.in.web.dto.PinResetOtpSendRequest;
+import com.payauth.payauth.auth.adapter.in.web.dto.PinResetOtpVerifyRequest;
 import com.payauth.payauth.auth.adapter.in.web.dto.PinVerifyRequest;
 import com.payauth.payauth.auth.adapter.in.web.dto.PinVerifyResponse;
 import com.payauth.payauth.auth.adapter.in.web.dto.ResetPinRequest;
@@ -16,10 +18,12 @@ import com.payauth.payauth.auth.application.port.in.PinChangeResult;
 import com.payauth.payauth.auth.application.port.in.PinVerifyResult;
 import com.payauth.payauth.auth.application.port.in.ResetPinUseCase.ResetPinCommand;
 import com.payauth.payauth.auth.application.port.in.SendOtpUseCase.SendOtpCommand;
+import com.payauth.payauth.auth.application.port.in.SendPinResetOtpUseCase.SendPinResetOtpCommand;
 import com.payauth.payauth.auth.application.port.in.SendUnlockOtpUseCase.SendUnlockOtpCommand;
 import com.payauth.payauth.auth.application.port.in.TokenPair;
 import com.payauth.payauth.auth.application.port.in.UnlockAccountUseCase.UnlockAccountCommand;
 import com.payauth.payauth.auth.application.port.in.VerifyOtpUseCase.VerifyOtpCommand;
+import com.payauth.payauth.auth.application.port.in.VerifyPinResetOtpUseCase.VerifyPinResetOtpCommand;
 import com.payauth.payauth.auth.application.port.in.VerifyPinUseCase.VerifyPinCommand;
 import com.payauth.payauth.auth.application.port.in.VerifyUnlockOtpUseCase.VerifyUnlockOtpCommand;
 import org.springframework.stereotype.Component;
@@ -92,6 +96,21 @@ public class AuthWebMapper {
     public UnlockAccountCommand toUnlockAccountCommand(UnlockAccountRequest request) {
         return new UnlockAccountCommand(
                 request.getVerifiedToken()
+        );
+    }
+
+    public SendPinResetOtpCommand toSendPinResetOtpCommand(PinResetOtpSendRequest request) {
+        return new SendPinResetOtpCommand(
+                request.getPhoneNumber(),
+                request.getName(),
+                request.getBirthDate()
+        );
+    }
+
+    public VerifyPinResetOtpCommand toVerifyPinResetOtpCommand(PinResetOtpVerifyRequest request) {
+        return new VerifyPinResetOtpCommand(
+                request.getPhoneNumber(),
+                request.getOtp()
         );
     }
 
