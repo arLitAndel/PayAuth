@@ -54,7 +54,7 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
         String phoneHash = cryptoUtil.hash(session.phoneNumber());
         Optional<User> existingUser = loadUserPort.findByPhoneNumberHash(phoneHash);
 
-        // 4. 회원저장 (기존 PENDING 유저가 없을 때만 insert)
+        // 4. 회원저장
         User savedUser;
         if (existingUser.isEmpty()) {
             User newUser = User.createNewUser(
@@ -65,7 +65,14 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
             );
             savedUser = saveUserPort.saveUser(newUser);
         } else {
-            savedUser = existingUser.get(); // PENDING 유저면 기존 유저 그대로 사용
+            User existing = existingUser.get();
+            if (existing.isDeleted()) {
+                // 탈퇴 후 재가입: 기존 레코드를 PENDING으로 초기화
+                existing.resetForReRegistration();
+                savedUser = saveUserPort.saveUser(existing);
+            } else {
+                savedUser = existing; // PENDING 유저면 기존 유저 그대로 사용
+            }
         }
 
         // 5. 인증 세션 삭제 + 핀 등록용 임시 토큰 저장

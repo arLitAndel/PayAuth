@@ -67,8 +67,13 @@ public class SignUpRequestService implements SignUpRequestUseCase {
             if (user.getUserStatus() == UserStatus.ACTIVE) {
                 throw new BusinessException(ErrorCode.DUPLICATED_PHONE_NUMBER);
             }
-            log.info("[REGISTER_RETRY] Pending user found, resending verification. Phone: {}",
-                    MaskUtil.maskPhone(phoneNumber));
+            if (user.isDeleted()) {
+                log.info("[REGISTER_REENTRY] Withdrawn user re-registering. Phone: {}",
+                        MaskUtil.maskPhone(phoneNumber));
+            } else {
+                log.info("[REGISTER_RETRY] Pending user found, resending verification. Phone: {}",
+                        MaskUtil.maskPhone(phoneNumber));
+            }
         });
 
         // 2. 재발송 횟수 체크

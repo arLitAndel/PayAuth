@@ -102,6 +102,12 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void resetForReRegistration() {
+        this.userStatus = UserStatus.PENDING;
+        this.deletedAt = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // === 검증 로직 (private) ===
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {

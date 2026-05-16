@@ -12,5 +12,6 @@ public enum ActivityAction {
     OTP_VERIFY,
     PIN_VERIFY,
     PIN_CHANGE,
-    PIN_RESET
+    PIN_RESET,
+    WITHDRAW
 }
