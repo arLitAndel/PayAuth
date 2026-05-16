@@ -82,6 +82,7 @@ public class ResetPinService implements ResetPinUseCase {
         pinPolicy.validate(
                 command.newPin(),
                 user.getBirthDate(),
+                phoneNumber,
                 credential.getPinCode(),
                 credential.getPreviousPinHashesView()
         );

@@ -106,6 +106,7 @@ public class ChangePinService implements ChangePinUseCase {
         pinPolicy.validate(
                 command.newPin(),
                 user.getBirthDate(),
+                phoneNumber,
                 credential.getPinCode(),
                 credential.getPreviousPinHashesView()
         );

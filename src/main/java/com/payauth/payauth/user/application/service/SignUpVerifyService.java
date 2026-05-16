@@ -76,7 +76,7 @@ public class SignUpVerifyService implements SignUpVerifyUseCase {
         }
 
         // 5. 인증 세션 삭제 + 핀 등록용 임시 토큰 저장
-        signUpSessionPort.deleteVerificationSession(session.phoneNumber());
+        signUpSessionPort.deleteVerificationSession(command.verificationId());
         String signUpToken = UUID.randomUUID().toString();
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(10);
         signUpSessionPort.savePinRegisterToken(signUpToken, savedUser.getUserId()); // TTL 10분

@@ -16,6 +16,7 @@ import java.util.Set;
  *     <li>금지: 연속된 숫자(123456 / 654321 등)</li>
  *     <li>금지: 반복 패턴(111111 / 121212 / 123123 / 동일숫자 4자 이상 연속)</li>
  *     <li>금지: 사용자 생년월일 기반 PIN(YYMMDD / MMDDYY / DDMMYY / YYYYMM / YYYYDD)</li>
+ *     <li>금지: 전화번호에 포함된 6자리 연속 숫자</li>
  *     <li>금지: 현재 PIN 과 동일</li>
  *     <li>금지: 최근 사용한 PIN 이력과 동일</li>
  * </ul>
@@ -33,17 +34,20 @@ public class PinPolicy {
      *
      * @param newRawPin           검증할 원문 PIN
      * @param birthDate           사용자 생년월일 (YYYYMMDD, null 허용)
+     * @param phoneNumber         사용자 전화번호 (숫자만, null 허용)
      * @param currentPinHash      현재 등록된 PIN 의 bcrypt 해시
      * @param previousPinHashes   최근 사용한 PIN 해시들 (없으면 빈 리스트)
      */
     public void validate(String newRawPin,
                          String birthDate,
+                         String phoneNumber,
                          String currentPinHash,
                          List<String> previousPinHashes) {
         validateFormat(newRawPin);
         validateNotSequential(newRawPin);
         validateNotRepeated(newRawPin);
         validateNotBirthDate(newRawPin, birthDate);
+        validateNotPhoneNumber(newRawPin, phoneNumber);
         validateNotSameAsCurrent(newRawPin, currentPinHash);
         validateNotRecentlyUsed(newRawPin, previousPinHashes);
     }
@@ -115,6 +119,18 @@ public class PinPolicy {
         );
         if (forbidden.contains(pin)) {
             throw new BusinessException(ErrorCode.PIN_CANNOT_BE_BIRTH_DATE);
+        }
+    }
+
+    // === 전화번호 포함 ===
+    // 전화번호(숫자)의 연속 6자리 부분 문자열과 일치하면 차단
+    private void validateNotPhoneNumber(String pin, String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.length() < PIN_LENGTH) return;
+        String digitsOnly = phoneNumber.replaceAll("\\D", "");
+        for (int i = 0; i <= digitsOnly.length() - PIN_LENGTH; i++) {
+            if (pin.equals(digitsOnly.substring(i, i + PIN_LENGTH))) {
+                throw new BusinessException(ErrorCode.PIN_CANNOT_CONTAIN_PHONE_NUMBER);
+            }
         }
     }
 

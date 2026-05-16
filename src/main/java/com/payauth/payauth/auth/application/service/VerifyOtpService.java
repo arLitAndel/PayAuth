@@ -53,7 +53,7 @@ public class VerifyOtpService implements VerifyOtpUseCase {
         saveVerifiedTokenPort.save(verifiedToken, phoneNumber, VERIFIED_TOKEN_TTL_SECONDS);
 
         //두 어댑터가 각기 다른 키를 관리하기 때문에 port 분리
-        otpStorePort.delete(phoneNumber);           //otp코드
+        otpStorePort.delete(phoneNumber);           //otp
         otpSecurityPort.deleteAttempt(phoneNumber); //시도횟수
 
         saveActivityPort.record(null, ActivityCategory.AUTH, ActivityAction.OTP_VERIFY, true, null);

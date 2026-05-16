@@ -48,6 +48,10 @@ public class VerifyPinService implements VerifyPinUseCase {
         User user = loadUserPort.findByPhoneNumberHash(phoneHash)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
         // 3. AuthCredential 조회
         AuthCredential credential = loadAuthCredentialPort.loadByUserId(user.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_CREDENTIAL_NOT_FOUND));

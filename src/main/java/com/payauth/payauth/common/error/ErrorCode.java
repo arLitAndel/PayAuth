@@ -45,6 +45,7 @@ public enum ErrorCode {
     PIN_RECENTLY_USED(400, "A014", "최근에 사용한 핀번호는 다시 사용할 수 없습니다"),
     PIN_CANNOT_BE_BIRTH_DATE(400, "A015", "생년월일과 같은 핀번호는 사용할 수 없습니다"),
     PIN_CONFIRM_MISMATCH(400, "A016", "새 핀번호와 확인 핀번호가 일치하지 않습니다"),
+    PIN_CANNOT_CONTAIN_PHONE_NUMBER(400, "A017", "전화번호가 포함된 핀번호는 사용할 수 없습니다"),
 
     // Encryption Errors
     ENCRYPTION_FAILED(500, "E001", "암호화 처리 중 오류가 발생했습니다"),
