@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/users/me")
+@RequestMapping("/users/withdraw")
 @RequiredArgsConstructor
 public class WithdrawController {
 
@@ -22,11 +22,11 @@ public class WithdrawController {
     private final WithdrawUseCase withdrawUseCase;
 
     @DeleteMapping
-    public ResponseEntity<Void> withdraw(HttpServletRequest request) {
+    public ResponseEntity<String> withdraw(HttpServletRequest request) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String accessToken = extractBearer(request);
         withdrawUseCase.withdraw(new WithdrawUseCase.WithdrawCommand(userId, accessToken));
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("탈퇴가 완료되었습니다");
     }
 
     private String extractBearer(HttpServletRequest request) {

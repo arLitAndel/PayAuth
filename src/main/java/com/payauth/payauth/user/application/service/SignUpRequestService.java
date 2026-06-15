@@ -64,14 +64,12 @@ public class SignUpRequestService implements SignUpRequestUseCase {
         // 1. 중복 체크 (가장 먼저 수행하여 불필요한 리소스 방지)
         String phoneHash = cryptoUtil.hash(phoneNumber);
         loadUserPort.findByPhoneNumberHash(phoneHash).ifPresent(user -> {
-            if (user.getUserStatus() == UserStatus.ACTIVE) {
-                throw new BusinessException(ErrorCode.DUPLICATED_PHONE_NUMBER);
-            }
-            if (user.isDeleted()) {
-                log.info("[REGISTER_REENTRY] Withdrawn user re-registering. Phone: {}",
+            switch (user.getUserStatus()) {
+                case ACTIVE -> throw new BusinessException(ErrorCode.DUPLICATED_PHONE_NUMBER);
+                case LOCKED, BLOCKED, INACTIVE -> throw new BusinessException(ErrorCode.SIGN_UP_NOT_ALLOWED);
+                case DELETED -> log.info("[REGISTER_REENTRY] Withdrawn user re-registering. Phone: {}",
                         MaskUtil.maskPhone(phoneNumber));
-            } else {
-                log.info("[REGISTER_RETRY] Pending user found, resending verification. Phone: {}",
+                default -> log.info("[REGISTER_RETRY] Pending user found, resending verification. Phone: {}",
                         MaskUtil.maskPhone(phoneNumber));
             }
         });
