@@ -57,3 +57,5 @@ application.properties
 
 #설정
 application-local.properties
+# Redis snapshot
+*.rdb
